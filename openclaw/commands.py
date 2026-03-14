@@ -43,6 +43,8 @@ class OpenClawCommands:
         "invest evolve status": "查看进化状态",
         "invest evolve learn": "执行知识学习",
         "invest evolve upgrade": "执行系统升级",
+        "invest schedule": "查看定时任务",
+        "invest start": "启动定时调度",
         "invest status": "查看系统状态",
     }
     
@@ -94,6 +96,12 @@ class OpenClawCommands:
                 return cls._cmd_evolve_upgrade()
             else:
                 return "进化命令: status, learn, upgrade"
+        
+        elif action == "schedule":
+            return cls._cmd_schedule()
+        
+        elif action == "start":
+            return cls._cmd_start()
         
         elif action == "status":
             return cls._cmd_status()
@@ -202,17 +210,154 @@ class OpenClawCommands:
         if report_type not in ["daily", "weekly"]:
             return "❌ 报告类型: daily 或 weekly"
         
-        return f"⏳ {report_type}报告生成功能开发中...\n预计Phase 2完成。"
+        try:
+            if report_type == "daily":
+                from report.daily_report import DailyReportGenerator
+                generator = DailyReportGenerator()
+            else:
+                from report.weekly_report import WeeklyReportGenerator
+                generator = WeeklyReportGenerator()
+            
+            report = generator.generate()
+            
+            # 生成markdown输出
+            lines = [
+                f"📊 **{report.get('title', report_type.upper() + ' Report')}**\n",
+                f"📅 {report.get('date', datetime.now().strftime('%Y-%m-%d'))}",
+                "",
+            ]
+            
+            # 市场概览
+            market = report.get('market_overview', {})
+            if market:
+                lines.append("**📈 市场概览**")
+                for index, data in market.items():
+                    emoji = "🟢" if data.get('change_pct', 0) >= 0 else "🔴"
+                    lines.append(f"{emoji} {index}: {data.get('change_pct', 0):+.2f}%")
+                lines.append("")
+            
+            # 板块表现
+            sectors = report.get('sector_performance', [])
+            if sectors:
+                lines.append("**🏆 板块表现 TOP3**")
+                for i, sector in enumerate(sectors[:3], 1):
+                    emoji = "🥇" if i == 1 else "🥈" if i == 2 else "🥉"
+                    lines.append(f"{emoji} {sector['name']}: {sector.get('change_pct', 0):+.2f}%")
+                lines.append("")
+            
+            # 个股推荐
+            picks = report.get('stock_picks', [])
+            if picks:
+                lines.append("**⭐ 推荐个股**")
+                for pick in picks[:3]:
+                    signal_emoji = "💚" if pick.get('signal') == 'buy' else "❤️" if pick.get('signal') == 'sell' else "💛"
+                    lines.append(f"{signal_emoji} {pick['symbol']} - {pick.get('name', '')} (置信度: {pick.get('confidence', 0):.0f}%)")
+                lines.append("")
+            
+            # AI洞察
+            insights = report.get('ai_insights', [])
+            if insights:
+                lines.append("**🤖 AI洞察**")
+                for insight in insights[:2]:
+                    lines.append(f"• {insight}")
+                lines.append("")
+            
+            lines.append("—")
+            lines.append("✅ 报告已保存至 reports/ 目录")
+            
+            return "\n".join(lines)
+            
+        except Exception as e:
+            return f"❌ 报告生成失败: {e}"
     
     @classmethod
     def _cmd_portfolio(cls) -> str:
         """查看组合"""
-        return "💼 投资组合管理功能开发中...\n预计Phase 4完成。"
+        try:
+            from simulation.portfolio import PortfolioManager
+            from storage.database import DatabaseManager
+            
+            db = DatabaseManager()
+            pm = PortfolioManager(db)
+            
+            # 获取活跃组合
+            portfolios = pm.get_all_portfolios()
+            
+            if not portfolios:
+                return "💼 **投资组合**\n\n暂无投资组合。\n\n使用 `invest simulate` 创建模拟组合。"
+            
+            lines = ["💼 **投资组合概览**\n"]
+            
+            for portfolio in portfolios:
+                total_value = portfolio.get_total_value()
+                initial = portfolio.initial_capital
+                pnl = total_value - initial
+                pnl_pct = (pnl / initial) * 100 if initial > 0 else 0
+                emoji = "🟢" if pnl >= 0 else "🔴"
+                
+                lines.append(f"**{portfolio.name}**")
+                lines.append(f"总资产: ${total_value:,.2f}")
+                lines.append(f"盈亏: {emoji} ${pnl:+,.2f} ({pnl_pct:+.2f}%)")
+                lines.append(f"持仓数: {len(portfolio.holdings)}")
+                
+                if portfolio.holdings:
+                    lines.append("**持仓:**")
+                    for symbol, holding in portfolio.holdings.items():
+                        lines.append(f"  • {symbol}: {holding['shares']}股 @ ${holding['avg_cost']:.2f}")
+                
+                lines.append("")
+            
+            return "\n".join(lines)
+            
+        except Exception as e:
+            return f"❌ 获取组合失败: {e}"
     
     @classmethod
     def _cmd_simulate(cls) -> str:
         """运行模拟"""
-        return "🎮 投资模拟功能开发中...\n预计Phase 4完成。"
+        try:
+            from simulation.backtest import BacktestEngine
+            from simulation.strategy import MomentumStrategy
+            from simulation.portfolio import PortfolioManager
+            from storage.database import DatabaseManager
+            from data.market_data import MarketDataManager
+
+            db = DatabaseManager()
+            pm = PortfolioManager(db)
+
+            # 创建或获取模拟组合
+            portfolio = pm.get_portfolio(1)
+            if not portfolio:
+                portfolio = pm.create_portfolio("模拟组合", initial_capital=100000.0)
+
+            # 运行回测
+            engine = BacktestEngine(
+                strategy=MomentumStrategy(),
+                portfolio=portfolio,
+                start_date="2024-01-01",
+                end_date=datetime.now().strftime("%Y-%m-%d")
+            )
+
+            result = engine.run()
+
+            lines = [
+                "🎮 **投资模拟结果**\n",
+                f"策略: 动量策略",
+                f"初始资金: ${result['initial_capital']:,.2f}",
+                f"最终资产: ${result['final_value']:,.2f}",
+                f"总收益率: {result['total_return_pct']:+.2f}%",
+                f"年化收益率: {result['annualized_return_pct']:+.2f}%",
+                f"最大回撤: {result['max_drawdown_pct']:.2f}%",
+                f"夏普比率: {result['sharpe_ratio']:.2f}",
+                f"交易次数: {result['total_trades']}",
+                "",
+                "✅ 模拟完成！使用 `invest portfolio` 查看详细持仓。"
+            ]
+
+            return "\n".join(lines)
+
+        except Exception as e:
+            return f"❌ 模拟运行失败: {e}"
     
     @classmethod
     def _cmd_evolve_status(cls) -> str:
@@ -275,6 +420,52 @@ class OpenClawCommands:
                 lines.append(f"   {status} 已自动执行")
         
         return "\n".join(lines)
+    
+    @classmethod
+    def _cmd_schedule(cls) -> str:
+        """查看定时任务"""
+        try:
+            from openclaw.scheduler import InvestmentScheduler
+            
+            scheduler = InvestmentScheduler()
+            status = scheduler.get_status()
+            
+            lines = [
+                "⏰ **定时任务调度**\n",
+                f"运行状态: {'🟢 运行中' if status['running'] else '🔴 已停止'}",
+                "",
+                "**任务列表:**",
+            ]
+            
+            for job in status['jobs']:
+                status_emoji = "🟢" if job['enabled'] else "🔴"
+                last_run = job['last_run'][:10] if job['last_run'] else "从未"
+                lines.append(f"{status_emoji} **{job['name']}**")
+                lines.append(f"   时间: {job['cron']} ({job['timezone']})")
+                lines.append(f"   上次运行: {last_run}")
+                lines.append("")
+            
+            lines.append("使用 `invest start` 启动定时调度")
+            
+            return "\n".join(lines)
+            
+        except Exception as e:
+            return f"❌ 获取调度状态失败: {e}"
+    
+    @classmethod
+    def _cmd_start(cls) -> str:
+        """启动定时调度"""
+        try:
+            import asyncio
+            from openclaw.scheduler import start_scheduler
+            
+            # 在后台启动
+            asyncio.create_task(start_scheduler())
+            
+            return "🚀 **定时调度已启动**\n\n系统将自动执行：\n• 开盘数据更新\n• 收盘日报生成\n• 晚间自动学习\n• 周末周报生成"
+            
+        except Exception as e:
+            return f"❌ 启动调度失败: {e}"
     
     @classmethod
     def _cmd_status(cls) -> str:
