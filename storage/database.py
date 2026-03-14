@@ -166,9 +166,9 @@ class DatabaseManager:
         """获取最新报告"""
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.execute("""
-                SELECT * FROM analysis_reports 
+                SELECT * FROM analysis_reports
                 WHERE report_type = ? AND sector = ?
-                ORDER BY created_at DESC LIMIT 1
+                ORDER BY created_at DESC, id DESC LIMIT 1
             """, (report_type, sector))
             row = cursor.fetchone()
             if row:
