@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ title }}</title>
+  <style>
+    body { font-family: "PingFang SC", "Microsoft YaHei", sans-serif; max-width: 1000px; margin: 0 auto; padding: 20px; color: #333; }
+    h1 { color: #1a237e; border-bottom: 3px solid #1a237e; padding-bottom: 8px; }
+    h2 { color: #283593; margin-top: 32px; }
+    h3 { color: #3949ab; }
+    table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+    th { background: #e8eaf6; padding: 8px 12px; text-align: left; font-weight: 600; }
+    td { padding: 7px 12px; border-bottom: 1px solid #e0e0e0; }
+    tr:hover td { background: #f5f5f5; }
+    .bullish { color: #c62828; font-weight: bold; }
+    .bearish { color: #2e7d32; font-weight: bold; }
+    .neutral { color: #757575; }
+    .buy { color: #c62828; font-weight: bold; }
+    .sell { color: #2e7d32; font-weight: bold; }
+    .hold { color: #ef6c00; }
+    .meta { color: #666; font-size: 0.9em; margin-bottom: 24px; }
+    .overview-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 16px 0; }
+    .overview-card { background: #f5f5f5; border-radius: 8px; padding: 16px; text-align: center; }
+    .overview-card .value { font-size: 2em; font-weight: bold; color: #1a237e; }
+    .overview-card .label { font-size: 0.85em; color: #666; margin-top: 4px; }
+    .recommendation { background: #f8f9ff; border-left: 4px solid #3949ab; padding: 12px 16px; margin: 12px 0; border-radius: 0 8px 8px 0; }
+    .recommendation h4 { margin: 0 0 6px; color: #1a237e; }
+    .disclaimer { background: #fff3e0; border: 1px solid #ffb74d; border-radius: 8px; padding: 14px; margin-top: 32px; font-size: 0.9em; color: #e65100; }
+  </style>
+</head>
+<body>
+  <h1>{{ title }}</h1>
+  <div class="meta">生成时间: {{ generated_at }} &nbsp;|&nbsp; 分析师: {{ author }}</div>
+
+  <h2>市场概览</h2>
+  <div class="overview-grid">
+    <div class="overview-card"><div class="value">{{ market_overview.total_stocks }}</div><div class="label">分析标的</div></div>
+    <div class="overview-card"><div class="value bullish">{{ market_overview.bullish_count }}</div><div class="label">看涨</div></div>
+    <div class="overview-card"><div class="value bearish">{{ market_overview.bearish_count }}</div><div class="label">看跌</div></div>
+  </div>
+  <p><strong>市场情绪:</strong> {{ market_overview.sentiment }}</p>
+  {% if market_overview.summary %}<blockquote>{{ market_overview.summary }}</blockquote>{% endif %}
+
+  <h2>板块分析</h2>
+  {% for sector in sectors %}
+  <h3>{{ sector.name }} ({{ sector.symbol_key }})</h3>
+  <p><strong>板块情绪:</strong> {{ sector.sentiment }} &nbsp;|&nbsp; 分析标的: {{ sector.stock_count }} 只</p>
+  <table>
+    <thead>
+      <tr><th>股票</th><th>最新价</th><th>RSI</th><th>MACD</th><th>趋势</th><th>信号</th><th>置信度</th></tr>
+    </thead>
+    <tbody>
+      {% for s in sector.stocks %}
+      <tr>
+        <td><strong>{{ s.symbol }}</strong></td>
+        <td>${{ s.price | format_float }}</td>
+        <td>{{ s.rsi | format_float(1) }}</td>
+        <td>{{ s.macd | format_float(3) }}</td>
+        <td class="{{ s.trend }}">{{ s.trend | trend_label }}</td>
+        <td class="{{ s.signal }}">{{ s.signal | signal_label }}</td>
+        <td>{{ s.confidence | format_float(1) }}%</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endfor %}
+
+  <h2>个股推荐</h2>
+  <h3>买入关注</h3>
+  {% if buy_recommendations %}
+    {% for r in buy_recommendations %}
+    <div class="recommendation">
+      <h4>{{ r.symbol }} — {{ r.name }}</h4>
+      <p>价格: <strong>${{ r.price | format_float }}</strong> &nbsp;|&nbsp; RSI: {{ r.rsi | format_float(1) }} &nbsp;|&nbsp; MACD柱: {{ r.macd_hist | format_float(4) }}</p>
+      <p>支撑: ${{ r.support | format_float }} / 阻力: ${{ r.resistance | format_float }}</p>
+      <p>理由: {{ r.reason }}</p>
+    </div>
+    {% endfor %}
+  {% else %}<p><em>当前无明确买入信号</em></p>{% endif %}
+
+  <h3>卖出/减仓关注</h3>
+  {% if sell_recommendations %}
+    {% for r in sell_recommendations %}
+    <div class="recommendation" style="border-left-color: #c62828;">
+      <h4>{{ r.symbol }} — {{ r.name }}</h4>
+      <p>价格: <strong>${{ r.price | format_float }}</strong> &nbsp;|&nbsp; RSI: {{ r.rsi | format_float(1) }}</p>
+      <p>理由: {{ r.reason }}</p>
+    </div>
+    {% endfor %}
+  {% else %}<p><em>当前无明确卖出信号</em></p>{% endif %}
+
+  <div class="disclaimer">
+    <strong>风险提示:</strong> 本报告由 OpenClaw Investment Analyst 自动生成，仅供参考，不构成投资建议。投资有风险，入市需谨慎。
+  </div>
+</body>
+</html>

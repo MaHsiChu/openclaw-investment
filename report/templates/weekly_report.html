@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ title }}</title>
+  <style>
+    body { font-family: "PingFang SC", "Microsoft YaHei", sans-serif; max-width: 1000px; margin: 0 auto; padding: 20px; color: #333; }
+    h1 { color: #1a237e; border-bottom: 3px solid #1a237e; padding-bottom: 8px; }
+    h2 { color: #283593; margin-top: 32px; }
+    h3 { color: #3949ab; }
+    table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+    th { background: #e8eaf6; padding: 8px 12px; text-align: left; }
+    td { padding: 7px 12px; border-bottom: 1px solid #e0e0e0; }
+    tr:hover td { background: #f5f5f5; }
+    .pos { color: #c62828; font-weight: bold; }
+    .neg { color: #2e7d32; font-weight: bold; }
+    .meta { color: #666; font-size: 0.9em; margin-bottom: 24px; }
+    .disclaimer { background: #fff3e0; border: 1px solid #ffb74d; border-radius: 8px; padding: 14px; margin-top: 32px; font-size: 0.9em; color: #e65100; }
+  </style>
+</head>
+<body>
+  <h1>{{ title }}</h1>
+  <div class="meta">周期: {{ week_start }} — {{ week_end }} &nbsp;|&nbsp; 生成时间: {{ generated_at }} &nbsp;|&nbsp; {{ author }}</div>
+
+  <h2>一周回顾</h2>
+  {% for sector in sectors %}
+  <h3>{{ sector.name }}</h3>
+  <table>
+    <thead><tr><th>股票</th><th>周涨跌幅</th><th>周最高</th><th>周最低</th><th>均量变化</th><th>信号</th></tr></thead>
+    <tbody>
+      {% for s in sector.stocks %}
+      <tr>
+        <td><strong>{{ s.symbol }}</strong></td>
+        <td class="{{ 'pos' if s.week_change and s.week_change > 0 else 'neg' }}">{{ s.week_change | format_pct }}</td>
+        <td>${{ s.week_high | format_float }}</td>
+        <td>${{ s.week_low | format_float }}</td>
+        <td>{{ s.volume_change | format_pct }}</td>
+        <td>{{ s.signal | signal_label }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endfor %}
+
+  <h2>趋势分析</h2>
+  <h3>强势板块</h3>
+  <ul>{% for s in trend_analysis.strong_sectors %}<li><strong>{{ s.name }}</strong>: {{ s.reason }}</li>{% endfor %}</ul>
+  <h3>弱势板块</h3>
+  <ul>{% for s in trend_analysis.weak_sectors %}<li><strong>{{ s.name }}</strong>: {{ s.reason }}</li>{% endfor %}</ul>
+
+  <h2>一周涨幅榜</h2>
+  <table>
+    <thead><tr><th>排名</th><th>股票</th><th>涨跌幅</th><th>最新价</th><th>信号</th></tr></thead>
+    <tbody>
+      {% for r in top_performers %}
+      <tr>
+        <td>{{ loop.index }}</td>
+        <td><strong>{{ r.symbol }}</strong></td>
+        <td class="pos">{{ r.week_change | format_pct }}</td>
+        <td>${{ r.price | format_float }}</td>
+        <td>{{ r.signal | signal_label }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h2>一周跌幅榜</h2>
+  <table>
+    <thead><tr><th>排名</th><th>股票</th><th>涨跌幅</th><th>最新价</th><th>信号</th></tr></thead>
+    <tbody>
+      {% for r in bottom_performers %}
+      <tr>
+        <td>{{ loop.index }}</td>
+        <td><strong>{{ r.symbol }}</strong></td>
+        <td class="neg">{{ r.week_change | format_pct }}</td>
+        <td>${{ r.price | format_float }}</td>
+        <td>{{ r.signal | signal_label }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h2>下周展望</h2>
+  {% if outlook.summary %}<p>{{ outlook.summary }}</p>{% endif %}
+  <h3>重点关注</h3>
+  <ul>{% for item in outlook.watchlist %}<li><strong>{{ item.symbol }}</strong>: {{ item.reason }}</li>{% endfor %}</ul>
+
+  <div class="disclaimer">
+    <strong>风险提示:</strong> 本报告由 OpenClaw Investment Analyst 自动生成，仅供参考，不构成投资建议。投资有风险，入市需谨慎。
+  </div>
+</body>
+</html>

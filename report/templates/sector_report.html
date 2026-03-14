@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ title }}</title>
+  <style>
+    body { font-family: "PingFang SC", "Microsoft YaHei", sans-serif; max-width: 1100px; margin: 0 auto; padding: 20px; color: #333; }
+    h1 { color: #1a237e; border-bottom: 3px solid #1a237e; padding-bottom: 8px; }
+    h2 { color: #283593; margin-top: 32px; }
+    h3 { color: #3949ab; margin-top: 24px; }
+    h4 { color: #555; margin: 12px 0 6px; }
+    table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+    th { background: #e8eaf6; padding: 8px 12px; text-align: left; }
+    td { padding: 7px 12px; border-bottom: 1px solid #e0e0e0; }
+    .meta { color: #666; font-size: 0.9em; margin-bottom: 24px; }
+    .stock-card { border: 1px solid #e0e0e0; border-radius: 10px; padding: 18px; margin-bottom: 24px; }
+    .stock-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .stock-title { font-size: 1.3em; font-weight: bold; color: #1a237e; }
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 0.85em; font-weight: bold; }
+    .buy { background: #ffebee; color: #c62828; }
+    .sell { background: #e8f5e9; color: #2e7d32; }
+    .hold { background: #fff8e1; color: #ef6c00; }
+    .bullish { background: #ffebee; color: #c62828; }
+    .bearish { background: #e8f5e9; color: #2e7d32; }
+    .neutral { background: #f5f5f5; color: #757575; }
+    .disclaimer { background: #fff3e0; border: 1px solid #ffb74d; border-radius: 8px; padding: 14px; margin-top: 32px; font-size: 0.9em; color: #e65100; }
+  </style>
+</head>
+<body>
+  <h1>{{ title }}</h1>
+  <div class="meta">板块: {{ sector_name }} &nbsp;|&nbsp; 生成时间: {{ generated_at }} &nbsp;|&nbsp; {{ author }}</div>
+
+  <h2>板块概览</h2>
+  <table>
+    <tr><th>指标</th><th>数值</th></tr>
+    <tr><td>分析标的</td><td>{{ overview.stock_count }} 只</td></tr>
+    <tr><td>看涨</td><td style="color:#c62828;font-weight:bold">{{ overview.bullish_count }}</td></tr>
+    <tr><td>看跌</td><td style="color:#2e7d32;font-weight:bold">{{ overview.bearish_count }}</td></tr>
+    <tr><td>中性</td><td>{{ overview.neutral_count }}</td></tr>
+    <tr><td>板块评级</td><td><strong>{{ overview.rating }}</strong></td></tr>
+  </table>
+  {% if overview.description %}<p>{{ overview.description }}</p>{% endif %}
+
+  <h2>个股深度分析</h2>
+  {% for stock in stocks %}
+  <div class="stock-card">
+    <div class="stock-header">
+      <div class="stock-title">{{ stock.symbol }}{% if stock.name %} — {{ stock.name }}{% endif %}</div>
+      <div>
+        <span class="badge {{ stock.trend }}">{{ stock.trend | trend_label }}</span>
+        <span class="badge {{ stock.signal }}" style="margin-left:6px">{{ stock.signal | signal_label }}</span>
+        <span style="color:#666;font-size:0.9em;margin-left:8px">{{ stock.confidence | format_float(1) }}%</span>
+      </div>
+    </div>
+    <p><strong>当前价格:</strong> ${{ stock.price | format_float }}</p>
+    <h4>技术指标</h4>
+    <table>
+      <thead><tr><th>指标</th><th>数值</th><th>状态</th></tr></thead>
+      <tbody>
+        <tr><td>SMA(5/20)</td><td>${{ stock.sma_5 | format_float }} / ${{ stock.sma_20 | format_float }}</td>
+            <td>{{ "多头排列" if stock.sma_5 and stock.sma_20 and stock.sma_5 > stock.sma_20 else "空头排列" }}</td></tr>
+        <tr><td>RSI(14)</td><td>{{ stock.rsi | format_float(1) }}</td>
+            <td>{{ "超卖" if stock.rsi and stock.rsi < 30 else "超买" if stock.rsi and stock.rsi > 70 else "正常" }}</td></tr>
+        <tr><td>MACD</td><td>{{ stock.macd | format_float(3) }}</td>
+            <td>{{ "金叉" if stock.macd_hist and stock.macd_hist > 0 else "死叉" }}</td></tr>
+        <tr><td>布林带 %B</td><td>{{ stock.bb_position | format_float(1) }}%</td>
+            <td>{{ "下轨" if stock.bb_position and stock.bb_position < 20 else "上轨" if stock.bb_position and stock.bb_position > 80 else "中区" }}</td></tr>
+        <tr><td>KDJ</td><td>K:{{ stock.k | format_float(1) }} D:{{ stock.d | format_float(1) }} J:{{ stock.j | format_float(1) }}</td><td>-</td></tr>
+        <tr><td>ATR(14)</td><td>{{ stock.atr | format_float(3) }}</td><td>-</td></tr>
+      </tbody>
+    </table>
+    <h4>支撑阻力</h4>
+    <p>支撑: ${{ stock.support | format_float }} &nbsp;|&nbsp; 阻力: ${{ stock.resistance | format_float }} &nbsp;|&nbsp; 枢轴: ${{ stock.pivot | format_float }}</p>
+    {% if stock.patterns %}
+    <h4>K线形态</h4>
+    <ul>{% for p in stock.patterns %}<li>{{ p }}</li>{% endfor %}</ul>
+    {% endif %}
+    {% if stock.summary %}<h4>分析小结</h4><p>{{ stock.summary }}</p>{% endif %}
+  </div>
+  {% endfor %}
+
+  {% if correlation %}
+  <h2>板块相关性</h2>
+  <p>趋势一致性: <strong>{{ correlation.consistency }}%</strong></p>
+  {% if correlation.leaders %}<p>领涨标的: <strong>{{ correlation.leaders | join(", ") }}</strong></p>{% endif %}
+  {% if correlation.laggards %}<p>落后标的: <strong>{{ correlation.laggards | join(", ") }}</strong></p>{% endif %}
+  {% endif %}
+
+  <div class="disclaimer">
+    <strong>风险提示:</strong> 本报告由 OpenClaw Investment Analyst 自动生成，仅供参考，不构成投资建议。投资有风险，入市需谨慎。
+  </div>
+</body>
+</html>
