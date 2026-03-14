@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OpenClaw Investment Dashboard</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+</head>
+<body>
+  <!-- Top Bar -->
+  <header id="topbar">
+    <div class="topbar-left">
+      <button id="menu-toggle" class="icon-btn" title="Toggle menu">&#9776;</button>
+      <h1 class="logo">OpenClaw <span class="accent">Investment</span></h1>
+    </div>
+    <div class="topbar-right">
+      <span id="sys-status" class="status-badge">--</span>
+      <span id="sys-uptime" class="uptime">--</span>
+      <span id="clock" class="clock"></span>
+    </div>
+  </header>
+
+  <div id="app">
+    <!-- Sidebar Navigation -->
+    <nav id="sidebar">
+      <ul>
+        <li class="active" data-page="sectors">
+          <span class="nav-icon">&#9635;</span>
+          <span class="nav-text">板块监控</span>
+        </li>
+        <li data-page="stock">
+          <span class="nav-icon">&#9650;</span>
+          <span class="nav-text">个股分析</span>
+        </li>
+        <li data-page="portfolio">
+          <span class="nav-icon">&#9733;</span>
+          <span class="nav-text">投资组合</span>
+        </li>
+        <li data-page="reports">
+          <span class="nav-icon">&#9998;</span>
+          <span class="nav-text">报告中心</span>
+        </li>
+        <li data-page="simulation">
+          <span class="nav-icon">&#9881;</span>
+          <span class="nav-text">模拟投资</span>
+        </li>
+        <li data-page="evolution">
+          <span class="nav-icon">&#10047;</span>
+          <span class="nav-text">系统进化</span>
+        </li>
+      </ul>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main id="content">
+
+      <!-- ============ Sectors Page ============ -->
+      <section id="page-sectors" class="page active">
+        <h2>板块监控</h2>
+        <div id="sectors-grid" class="card-grid"></div>
+      </section>
+
+      <!-- ============ Stock Detail Page ============ -->
+      <section id="page-stock" class="page">
+        <div class="page-header">
+          <h2>个股分析</h2>
+          <div class="controls">
+            <select id="stock-selector"><option value="">选择股票...</option></select>
+            <div class="btn-group">
+              <button class="range-btn active" data-days="30">1M</button>
+              <button class="range-btn" data-days="90">3M</button>
+              <button class="range-btn" data-days="180">6M</button>
+              <button class="range-btn" data-days="365">1Y</button>
+            </div>
+          </div>
+        </div>
+        <div class="stock-detail-grid">
+          <div class="card chart-card">
+            <div class="card-header">价格走势</div>
+            <div class="chart-container">
+              <canvas id="price-chart"></canvas>
+            </div>
+          </div>
+          <div class="card chart-card">
+            <div class="card-header">成交量</div>
+            <div class="chart-container chart-sm">
+              <canvas id="volume-chart"></canvas>
+            </div>
+          </div>
+          <div class="card" id="stock-info-card">
+            <div class="card-header">股票信息</div>
+            <div id="stock-info-body" class="kv-list">
+              <p class="placeholder">请选择一只股票查看详情</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ Portfolio Page ============ -->
+      <section id="page-portfolio" class="page">
+        <h2>投资组合</h2>
+        <div id="portfolio-summary" class="stat-row"></div>
+        <div class="card">
+          <div class="card-header">持仓明细</div>
+          <div class="table-wrap">
+            <table id="holdings-table">
+              <thead>
+                <tr>
+                  <th>代码</th><th>持股</th><th>成本</th>
+                  <th>现价</th><th>市值</th><th>盈亏</th><th>盈亏%</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ Reports Page ============ -->
+      <section id="page-reports" class="page">
+        <h2>报告中心</h2>
+        <div class="reports-layout">
+          <div class="card" id="reports-list-card">
+            <div class="card-header">报告列表</div>
+            <ul id="reports-list" class="report-list"></ul>
+          </div>
+          <div class="card" id="report-viewer-card">
+            <div class="card-header">报告内容</div>
+            <div id="report-content" class="report-content">
+              <p class="placeholder">选择一份报告查看内容</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ Simulation Page ============ -->
+      <section id="page-simulation" class="page">
+        <h2>模拟投资</h2>
+        <div id="sim-status" class="stat-row"></div>
+        <div class="card">
+          <div class="card-header">策略列表</div>
+          <div class="table-wrap">
+            <table id="strategies-table">
+              <thead>
+                <tr>
+                  <th>策略名称</th><th>类型</th><th>状态</th>
+                  <th>评分</th><th>胜率</th><th>夏普</th><th>参数</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card chart-card">
+          <div class="card-header">收益曲线 (模拟)</div>
+          <div class="chart-container">
+            <canvas id="equity-chart"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ Evolution Page ============ -->
+      <section id="page-evolution" class="page">
+        <h2>系统进化</h2>
+        <div id="evo-knowledge" class="stat-row"></div>
+        <div class="evo-grid">
+          <div class="card">
+            <div class="card-header">开发阶段进度</div>
+            <div id="phase-progress"></div>
+          </div>
+          <div class="card">
+            <div class="card-header">进化类型统计</div>
+            <div class="chart-container chart-sm">
+              <canvas id="evo-type-chart"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">进化历史</div>
+          <div class="table-wrap">
+            <table id="evo-history-table">
+              <thead>
+                <tr>
+                  <th>ID</th><th>时间</th><th>类型</th>
+                  <th>状态</th><th>触发</th><th>描述</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script src="/static/dashboard.js"></script>
+</body>
+</html>
