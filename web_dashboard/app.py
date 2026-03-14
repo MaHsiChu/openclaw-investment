@@ -470,6 +470,168 @@ def api_refresh(symbol):
 
 
 # ---------------------------------------------------------------------------
+# API: Alerts - 预警系统
+# ---------------------------------------------------------------------------
+_alert_manager = None
+_alert_engine = None
+
+def get_alert_manager():
+    global _alert_manager
+    if _alert_manager is None:
+        from alerts.manager import AlertManager
+        _alert_manager = AlertManager()
+    return _alert_manager
+
+def get_alert_engine():
+    global _alert_engine
+    if _alert_engine is None:
+        from alerts.engine import AlertEngine
+        _alert_engine = AlertEngine()
+    return _alert_engine
+
+
+@app.route("/api/alerts/rules", methods=["GET"])
+def api_alerts_rules():
+    """获取预警规则列表"""
+    manager = get_alert_manager()
+    symbol = request.args.get('symbol')
+    status = request.args.get('status')
+    
+    rules = manager.get_rules(symbol=symbol, status=status)
+    return jsonify([rule.to_dict() for rule in rules])
+
+
+@app.route("/api/alerts/rules", methods=["POST"])
+def api_create_alert_rule():
+    """创建预警规则"""
+    from alerts.models import AlertRule
+    
+    data = request.json
+    rule = AlertRule(
+        id=None,
+        name=data['name'],
+        symbol=data['symbol'],
+        alert_type=data['alert_type'],
+        condition=data['condition'],
+        threshold=float(data['threshold']),
+        severity=data.get('severity', 'medium'),
+        params=data.get('params', {}),
+        cooldown_minutes=int(data.get('cooldown_minutes', 60)),
+        notify_discord=data.get('notify_discord', True),
+        notify_telegram=data.get('notify_telegram', False),
+        description=data.get('description', ''),
+    )
+    
+    manager = get_alert_manager()
+    created = manager.create_rule(rule)
+    return jsonify(created.to_dict()), 201
+
+
+@app.route("/api/alerts/rules/<rule_id>", methods=["GET"])
+def api_get_alert_rule(rule_id):
+    """获取单个规则"""
+    manager = get_alert_manager()
+    rule = manager.get_rule(rule_id)
+    if not rule:
+        return jsonify({"error": "Rule not found"}), 404
+    return jsonify(rule.to_dict())
+
+
+@app.route("/api/alerts/rules/<rule_id>", methods=["PUT"])
+def api_update_alert_rule(rule_id):
+    """更新规则"""
+    data = request.json
+    manager = get_alert_manager()
+    updated = manager.update_rule(rule_id, data)
+    if not updated:
+        return jsonify({"error": "Rule not found"}), 404
+    return jsonify(updated.to_dict())
+
+
+@app.route("/api/alerts/rules/<rule_id>", methods=["DELETE"])
+def api_delete_alert_rule(rule_id):
+    """删除规则"""
+    manager = get_alert_manager()
+    success = manager.delete_rule(rule_id)
+    if not success:
+        return jsonify({"error": "Rule not found"}), 404
+    return jsonify({"success": True})
+
+
+@app.route("/api/alerts/rules/<rule_id>/toggle", methods=["POST"])
+def api_toggle_alert_rule(rule_id):
+    """启用/禁用规则"""
+    data = request.json
+    enabled = data.get('enabled', True)
+    
+    manager = get_alert_manager()
+    if enabled:
+        rule = manager.enable_rule(rule_id)
+    else:
+        rule = manager.disable_rule(rule_id)
+    
+    if not rule:
+        return jsonify({"error": "Rule not found"}), 404
+    return jsonify(rule.to_dict())
+
+
+@app.route("/api/alerts/history", methods=["GET"])
+def api_alerts_history():
+    """获取预警历史"""
+    manager = get_alert_manager()
+    symbol = request.args.get('symbol')
+    limit = request.args.get('limit', 100, type=int)
+    unread_only = request.args.get('unread', 'false').lower() == 'true'
+    
+    history = manager.get_alert_history(symbol=symbol, limit=limit, unread_only=unread_only)
+    return jsonify([h.to_dict() for h in history])
+
+
+@app.route("/api/alerts/history/<alert_id>/ack", methods=["POST"])
+def api_acknowledge_alert(alert_id):
+    """确认预警（标记已读）"""
+    manager = get_alert_manager()
+    success = manager.acknowledge_alert(alert_id)
+    if not success:
+        return jsonify({"error": "Alert not found"}), 404
+    return jsonify({"success": True})
+
+
+@app.route("/api/alerts/check", methods=["POST"])
+def api_check_alerts():
+    """手动触发预警检查"""
+    engine = get_alert_engine()
+    alerts = engine.check_all_rules()
+    return jsonify({
+        "checked": True,
+        "triggered_count": len(alerts),
+        "alerts": [a.to_dict() for a in alerts]
+    })
+
+
+@app.route("/api/alerts/templates", methods=["GET"])
+def api_alert_templates():
+    """获取预警模板"""
+    from alerts.models import ALERT_TEMPLATES
+    
+    templates = []
+    for key, template in ALERT_TEMPLATES.items():
+        templates.append({
+            "key": key,
+            **{k: v.value if hasattr(v, 'value') else v for k, v in template.items()}
+        })
+    return jsonify(templates)
+
+
+@app.route("/api/alerts/stats", methods=["GET"])
+def api_alerts_stats():
+    """获取预警统计"""
+    manager = get_alert_manager()
+    stats = manager.get_statistics()
+    return jsonify(stats)
+
+
+# ---------------------------------------------------------------------------
 # Background data refresh thread
 # ---------------------------------------------------------------------------
 def _background_refresh():
@@ -490,7 +652,7 @@ if __name__ == "__main__":
 
     print("=" * 50)
     print("  OpenClaw Investment Dashboard")
-    print(f"  http://localhost:5000")
+    print(f"  http://localhost:8080")
     print("=" * 50)
 
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=8080, debug=True)
