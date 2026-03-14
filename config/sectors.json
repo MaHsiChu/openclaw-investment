@@ -1,0 +1,105 @@
+{
+  "sectors": {
+    "internet": {
+      "name": "互联网",
+      "description": "全球互联网科技巨头",
+      "stocks": {
+        "US": [
+          {"symbol": "META", "name": "Meta Platforms", "market": "NASDAQ"},
+          {"symbol": "GOOGL", "name": "Alphabet", "market": "NASDAQ"},
+          {"symbol": "AMZN", "name": "Amazon", "market": "NASDAQ"},
+          {"symbol": "NFLX", "name": "Netflix", "market": "NASDAQ"},
+          {"symbol": "TSLA", "name": "Tesla", "market": "NASDAQ"}
+        ],
+        "CN": [
+          {"symbol": "BABA", "name": "阿里巴巴", "market": "NYSE"},
+          {"symbol": "TCEHY", "name": "腾讯", "market": "OTC"},
+          {"symbol": "JD", "name": "京东", "market": "NASDAQ"},
+          {"symbol": "PDD", "name": "拼多多", "market": "NASDAQ"}
+        ]
+      }
+    },
+    "banking": {
+      "name": "银行",
+      "description": "全球主要银行机构",
+      "stocks": {
+        "US": [
+          {"symbol": "JPM", "name": "JPMorgan Chase", "market": "NYSE"},
+          {"symbol": "BAC", "name": "Bank of America", "market": "NYSE"},
+          {"symbol": "WFC", "name": "Wells Fargo", "market": "NYSE"},
+          {"symbol": "C", "name": "Citigroup", "market": "NYSE"},
+          {"symbol": "GS", "name": "Goldman Sachs", "market": "NYSE"},
+          {"symbol": "MS", "name": "Morgan Stanley", "market": "NYSE"}
+        ],
+        "CN": [
+          {"symbol": "601398.SS", "name": "工商银行", "market": "SSE"},
+          {"symbol": "601288.SS", "name": "农业银行", "market": "SSE"},
+          {"symbol": "601988.SS", "name": "中国银行", "market": "SSE"}
+        ]
+      }
+    },
+    "finance": {
+      "name": "金融",
+      "description": "金融科技与支付",
+      "stocks": {
+        "US": [
+          {"symbol": "V", "name": "Visa", "market": "NYSE"},
+          {"symbol": "MA", "name": "Mastercard", "market": "NYSE"},
+          {"symbol": "PYPL", "name": "PayPal", "market": "NASDAQ"},
+          {"symbol": "SQ", "name": "Block", "market": "NYSE"},
+          {"symbol": "COIN", "name": "Coinbase", "market": "NASDAQ"},
+          {"symbol": "HOOD", "name": "Robinhood", "market": "NASDAQ"}
+        ]
+      }
+    },
+    "ai": {
+      "name": "人工智能",
+      "description": "AI芯片与基础设施",
+      "stocks": {
+        "US": [
+          {"symbol": "NVDA", "name": "NVIDIA", "market": "NASDAQ"},
+          {"symbol": "AMD", "name": "AMD", "market": "NASDAQ"},
+          {"symbol": "AVGO", "name": "Broadcom", "market": "NASDAQ"},
+          {"symbol": "ARM", "name": "ARM Holdings", "market": "NASDAQ"},
+          {"symbol": "SMCI", "name": "Super Micro", "market": "NASDAQ"},
+          {"symbol": "INTC", "name": "Intel", "market": "NASDAQ"}
+        ],
+        "CN": [
+          {"symbol": "601138.SS", "name": "工业富联", "market": "SSE"}
+        ]
+      }
+    },
+    "energy": {
+      "name": "能源",
+      "description": "石油天然气能源",
+      "stocks": {
+        "US": [
+          {"symbol": "XOM", "name": "Exxon Mobil", "market": "NYSE"},
+          {"symbol": "CVX", "name": "Chevron", "market": "NYSE"},
+          {"symbol": "COP", "name": "ConocoPhillips", "market": "NYSE"},
+          {"symbol": "OXY", "name": "Occidental", "market": "NYSE"},
+          {"symbol": "SLB", "name": "Schlumberger", "market": "NYSE"},
+          {"symbol": "MPC", "name": "Marathon", "market": "NYSE"}
+        ]
+      }
+    },
+    "gaming": {
+      "name": "游戏",
+      "description": "游戏开发与发行",
+      "stocks": {
+        "US": [
+          {"symbol": "RBLX", "name": "Roblox", "market": "NYSE"},
+          {"symbol": "EA", "name": "Electronic Arts", "market": "NASDAQ"},
+          {"symbol": "TTWO", "name": "Take-Two", "market": "NASDAQ"},
+          {"symbol": "U", "name": "Unity", "market": "NYSE"},
+          {"symbol": "PLTK", "name": "Playtika", "market": "NASDAQ"},
+          {"symbol": "ATVI", "name": "Activision", "market": "NASDAQ"}
+        ],
+        "CN": [
+          {"symbol": "002602.SZ", "name": "世纪华通", "market": "SZSE"},
+          {"symbol": "002555.SZ", "name": "三七互娱", "market": "SZSE"}
+        ]
+      }
+    }
+  }
+}
